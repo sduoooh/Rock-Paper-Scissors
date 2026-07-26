@@ -45,10 +45,14 @@ async function onConfirm() {
 }
 
 // 识别结果回调
+// 置信度阈值：低于此值的帧视为不可靠（残影/模糊），不更新截图
+// 训练时使用较高阈值（0.8）保证截图质量；游戏识别时不考虑阈值
+const SCORE_THRESHOLD = 0.8
 function onResult(r) {
   if (!r.ok || !r.rps) return
+  // 置信度未达阈值视为不可靠（残影/模糊），不弹字、不更新截图、不标记检测
+  if (r.score < SCORE_THRESHOLD) return
   const g = r.rps
-  const v = videoRef.value
   // 跳字：立即刷新为新字样（替换旧字样），重置淡出计时
   jumpText.value = META[g].label
   jumpVisible.value = true
@@ -57,20 +61,23 @@ function onResult(r) {
   fadeTimer = setTimeout(() => {
     jumpVisible.value = false
   }, 2000)
-  // 保存/更新截图（每帧检测到都更新）
-  if (v) batch[g] = captureSnapshot(v)
-  // 首次检测到该动作 -> 替换为绿√
-  if (!detected[g]) detected[g] = true
+  // 用 worker 识别的同一帧截图（r.frame），而非 video 当前帧
+  // 识别耗时 50-100ms，期间 video 已播放多帧，用 video 当前帧会导致"识别a记录b"
+  if (r.frame) {
+    batch[g] = captureSnapshot(r.frame)
+    if (!detected[g]) detected[g] = true
+  }
 }
 
-function captureSnapshot(v) {
+// 从 ImageBitmap 截图（worker 识别用的同一帧）
+function captureSnapshot(bitmap) {
   const canvas = document.createElement('canvas')
-  const w = (canvas.width = v.videoWidth || 320)
-  const h = (canvas.height = v.videoHeight || 240)
+  const w = (canvas.width = bitmap.width || 320)
+  const h = (canvas.height = bitmap.height || 240)
   const ctx = canvas.getContext('2d')
   ctx.translate(w, 0)
   ctx.scale(-1, 1) // 镜像，与预览一致
-  ctx.drawImage(v, 0, 0, w, h)
+  ctx.drawImage(bitmap, 0, 0, w, h)
   return canvas.toDataURL('image/jpeg', 0.85)
 }
 

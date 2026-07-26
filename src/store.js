@@ -8,10 +8,14 @@ const KEYS = {
 export const GESTURES = ['rock', 'paper', 'scissors']
 
 export function getSnapshot(gesture) {
-  return localStorage.getItem(KEYS[gesture]) || null
+  const v = localStorage.getItem(KEYS[gesture])
+  // 仅返回有效截图（data URL），过滤误存的 "null" 等无效值
+  return v && v.startsWith('data:') ? v : null
 }
 
 export function saveSnapshot(gesture, dataUrl) {
+  // 仅保存有效截图，避免空值覆盖已有数据
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return
   localStorage.setItem(KEYS[gesture], dataUrl)
 }
 

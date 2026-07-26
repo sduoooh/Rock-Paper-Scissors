@@ -105,15 +105,16 @@ async function beginRound() {
 }
 
 function handleResult(res) {
+  // 电脑随机出招，无论玩家是否出招都展示其截图（避免黑屏）
+  const rand = Math.random() * 3
+  const opp = rand < 1 ? 'scissors' : rand < 2 ? 'rock' : 'paper'
+  leftImage.value = getSnapshot(opp)
   if (!res.rps) {
     state.value = 'result'
     popup.value = '你出太慢了！'
     return
   }
   const player = res.rps
-  const rand = Math.random() * 3
-  const opp = rand < 1 ? 'scissors' : rand < 2 ? 'rock' : 'paper'
-  leftImage.value = getSnapshot(opp)
   // 规则：剪刀克布、布克石头、石头克剪刀
   const beats = { scissors: 'paper', paper: 'rock', rock: 'scissors' }
   let outcome

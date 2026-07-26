@@ -54,11 +54,18 @@ function getWorker() {
       const r = {
         ok: true,
         raw: top,
+        score: msg.score || 0,
         rps: top ? RPS_MAP[top] || null : null,
         thumbUp: top === THUMB_UP,
-        thumbDown: top === THUMB_DOWN
+        thumbDown: top === THUMB_DOWN,
+        // worker 识别用的同一帧 ImageBitmap，供主线程截图
+        // 保证识别与截图零时间差，避免"识别a记录b"的粘连
+        frame: msg.frame || null
       }
       if (resultCallback) resultCallback(r)
+      // 回调内若需保留 frame 应同步消费（如生成 dataURL）；
+      // 回调返回后统一释放，避免 ImageBitmap 泄漏
+      if (r.frame) r.frame.close()
       // 识别完成，调度下一帧抓取
       scheduleNext()
     } else if (msg.type === 'error') {
