@@ -8,16 +8,19 @@
 // CJS 环境 shim：vision_bundle 顶部会 Object.defineProperty(exports, ...)
 var module = { exports: {} }
 var exports = module.exports
-importScripts('/mediapipe/vision_bundle.js')
+// 相对路径：基准是 Worker 脚本自身 URL。
+// dev: /src/recognizer.worker.js -> ../mediapipe/ = /mediapipe/
+// build(GitHub Pages): /Rock-Paper-Scissors/assets/recognizer.worker-xxxx.js -> ../mediapipe/ = /Rock-Paper-Scissors/mediapipe/
+importScripts('../mediapipe/vision_bundle.js')
 var FilesetResolver = module.exports.FilesetResolver
 var GestureRecognizer = module.exports.GestureRecognizer
 
 // WASM 加载器文件（vision_wasm_internal.js 等）也已放在 public/mediapipe/ 本地：
 // vision_bundle 内部会用 importScripts() 加载它们，从 CDN 拉取会因网络/CORS 失败，必须本地。
-var WASM_BASE = '/mediapipe'
+var WASM_BASE = '../mediapipe'
 // 模型权重文件也本地化：官方 googleapis.com 在国内网络被阻断（Connection reset），
 // 无法 fetch。需手动下载 gesture_recognizer.task 放到 public/mediapipe/ 下。
-var MODEL_URL = '/mediapipe/gesture_recognizer.task'
+var MODEL_URL = '../mediapipe/gesture_recognizer.task'
 
 var recognizer = null
 var lastTs = 0
