@@ -3,6 +3,7 @@ import { ref, reactive, onUnmounted, nextTick } from 'vue'
 import { startRecognition, stopRecognition } from '../mediapipe'
 import { useCamera } from '../useCamera'
 import { saveSnapshot } from '../store'
+import { ORDER, META } from '../gestureMeta'
 
 const emit = defineEmits(['done', 'cancel'])
 
@@ -11,13 +12,6 @@ const { videoRef, startCamera, stopCamera } = useCamera()
 // 阶段：tip 提示 -> cam 摄像头/预览
 const phase = ref('tip')
 
-// 三个动作的批次状态
-const ORDER = ['scissors', 'rock', 'paper']
-const META = {
-  scissors: { emoji: '✌️', label: '剪刀' },
-  rock: { emoji: '✊', label: '石头' },
-  paper: { emoji: '✋', label: '布' }
-}
 const detected = reactive({ scissors: false, rock: false, paper: false })
 const batch = reactive({ scissors: null, rock: null, paper: null }) // 本次内存截图
 
@@ -46,12 +40,12 @@ async function onConfirm() {
 
 // 识别结果回调
 // 置信度阈值：低于此值的帧视为不可靠（残影/模糊），不更新截图
-// 训练时使用较高阈值（0.8）保证截图质量；游戏识别时不考虑阈值
-const SCORE_THRESHOLD = 0.8
+// 训练时使用较高阈值保证截图质量；布因模型识别难度较高，阈值单独放宽至 0.75
+const SCORE_THRESHOLD = { scissors: 0.8, rock: 0.8, paper: 0.75 }
 function onResult(r) {
   if (!r.ok || !r.rps) return
   // 置信度未达阈值视为不可靠（残影/模糊），不弹字、不更新截图、不标记检测
-  if (r.score < SCORE_THRESHOLD) return
+  if (r.score < SCORE_THRESHOLD[r.rps]) return
   const g = r.rps
   // 跳字：立即刷新为新字样（替换旧字样），重置淡出计时
   jumpText.value = META[g].label
