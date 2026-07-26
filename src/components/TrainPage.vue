@@ -40,8 +40,8 @@ async function onConfirm() {
 
 // 识别结果回调
 // 置信度阈值：低于此值的帧视为不可靠（残影/模糊），不更新截图
-// 训练时使用较高阈值保证截图质量；布因模型识别难度较高，阈值单独放宽至 0.75
-const SCORE_THRESHOLD = { scissors: 0.8, rock: 0.8, paper: 0.75 }
+// 训练时使用较高阈值保证截图质量；布因模型识别难度较高，阈值单独放宽至 0.7
+const SCORE_THRESHOLD = { scissors: 0.8, rock: 0.8, paper: 0.7 }
 function onResult(r) {
   if (!r.ok || !r.rps) return
   // 置信度未达阈值视为不可靠（残影/模糊），不弹字、不更新截图、不标记检测

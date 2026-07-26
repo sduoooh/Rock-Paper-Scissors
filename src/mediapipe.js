@@ -23,9 +23,11 @@ let captureCanvas = null
 let captureCtx = null
 let recognizeTimer = null
 let running = false
-// 识别节流：两次抓帧间至少间隔多久（ms）
-// 串行调度（识别完才抓下一帧），150ms 间隔兼顾实时性与 CPU 负载
-const RECOGNIZE_INTERVAL_MS = 150
+// 识别节流默认间隔：两次抓帧间至少间隔多久（ms）
+// 串行调度（识别完才抓下一帧）。训练用 300ms（降负载、减轻运动模糊），
+// 游戏用 150ms（更高实时性）。可在 startRecognition 时通过 intervalMs 覆盖
+const DEFAULT_RECOGNIZE_INTERVAL_MS = 300
+let recognizeIntervalMs = DEFAULT_RECOGNIZE_INTERVAL_MS
 
 function getWorker() {
   if (worker) return worker
@@ -92,7 +94,8 @@ export function initRecognizer() {
 
 // 启动识别会话：传入 video 元素与结果回调
 // 主线程定时从 video 抓帧 transfer 给 Worker，Worker 串行识别
-export async function startRecognition(video, onResult) {
+// intervalMs 可选：本次会话的识别间隔，不传用默认 300ms
+export async function startRecognition(video, onResult, intervalMs) {
   if (!workerReady) {
     try {
       await readyPromise
@@ -108,6 +111,7 @@ export async function startRecognition(video, onResult) {
   stopRecognition()
   resultCallback = onResult
   videoEl = video
+  recognizeIntervalMs = intervalMs || DEFAULT_RECOGNIZE_INTERVAL_MS
 
   // 初始化抓帧 canvas（优先 OffscreenCanvas，transferToImageBitmap 同步且零拷贝）
   const w = video.videoWidth || 640
@@ -128,7 +132,7 @@ export async function startRecognition(video, onResult) {
 
 function scheduleNext() {
   if (!running) return
-  recognizeTimer = setTimeout(captureAndRecognize, RECOGNIZE_INTERVAL_MS)
+  recognizeTimer = setTimeout(captureAndRecognize, recognizeIntervalMs)
 }
 
 // 从 video 抓取当前帧，生成 ImageBitmap transfer 给 Worker
