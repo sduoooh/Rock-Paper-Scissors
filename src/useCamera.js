@@ -5,8 +5,8 @@ import { ref, onUnmounted } from 'vue'
 const CONSTRAINTS = {
   video: {
     facingMode: 'user',
-    width: { ideal: 640 },
-    height: { ideal: 360 },
+    // 不限制分辨率：让摄像头给原始分辨率，识别器直接用全分辨率帧
+    // 细节更丰富，对手指张开度敏感的"布"等手势识别更可靠
     frameRate: { ideal: 15, max: 24 }
   },
   audio: false
