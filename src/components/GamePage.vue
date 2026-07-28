@@ -39,8 +39,8 @@ onMounted(async () => {
   popup.value = '如果准备好开始，就比划“竖大拇指”'
   state.value = 'ready'
   // 启动识别会话：主线程定时从 video 抓帧 transfer 给 Worker，Worker 串行识别
-  // 游戏需更高实时性，识别间隔用 150ms（训练用默认 300ms）
-  await startRecognition(videoRef.value, onResult, 150)
+  // 游戏需更高实时性，识别间隔用 50ms（训练用默认 300ms）
+  await startRecognition(videoRef.value, onResult, 50)
 })
 
 // 跳字刷新：立即显现新字样，2s 后慢慢淡出
